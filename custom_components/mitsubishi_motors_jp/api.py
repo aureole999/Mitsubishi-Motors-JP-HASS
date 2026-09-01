@@ -62,6 +62,14 @@ class _KintaroSessionExpired(MitsubishiJPError):
     """Kintaro session needs initialization."""
 
 
+class _KintaroRejected(MitsubishiJPError):
+    """Kintaro explicitly rejected a request before accepting it."""
+
+    def __init__(self, code: int | str) -> None:
+        super().__init__(f"Kintaro request failed (code {code})")
+        self.code = code
+
+
 def _number(value: Any) -> float | None:
     if isinstance(value, bool):
         return None
@@ -383,8 +391,9 @@ class MitsubishiJPClient:
         except _KintaroSessionExpired:
             if is_control or not retry_session:
                 error = (
-                    MitsubishiJPCommandUnknown(
-                        "Remote command outcome is unknown; it was not retried"
+                    MitsubishiJPCommandError(
+                        "Remote command was rejected because the service session "
+                        "expired; it was not retried"
                     )
                     if is_control
                     else MitsubishiJPConnectionError("Kintaro session expired")
@@ -395,10 +404,18 @@ class MitsubishiJPClient:
             return await self._async_kintaro_post(
                 path, body, vehicle=vehicle, retry_session=False
             )
+        except _KintaroRejected as err:
+            if is_control:
+                raise MitsubishiJPCommandError(
+                    f"Remote command was rejected by the service (code {err.code}); "
+                    "it was not retried"
+                ) from err
+            raise
         except (MitsubishiJPConnectionError, asyncio.TimeoutError) as err:
             if is_control:
                 raise MitsubishiJPCommandUnknown(
-                    "Remote command outcome is unknown; it was not retried"
+                    "Remote command outcome is unknown; it was not retried. "
+                    "Check the official app"
                 ) from err
             raise
 
@@ -410,7 +427,7 @@ class MitsubishiJPClient:
             if code == 600001:
                 raise _KintaroSessionExpired
             safe_code = code if isinstance(code, int) and 0 <= code <= 999999 else "unknown"
-            raise MitsubishiJPConnectionError(f"Kintaro request failed (code {safe_code})")
+            raise _KintaroRejected(safe_code)
         assert self._session_key is not None
         try:
             return kintaro_decrypt(envelope["payload"], self._session_key)
@@ -596,7 +613,8 @@ class MitsubishiJPClient:
             except (MitsubishiJPError, asyncio.TimeoutError) as err:
                 if command_was_sent:
                     raise MitsubishiJPCommandUnknown(
-                        "Command result could not be checked; the command was not retried"
+                        "Command result could not be checked; the command was not "
+                        "retried. Check the official app"
                     ) from err
                 raise
             polls += 1
@@ -609,7 +627,10 @@ class MitsubishiJPClient:
                     raise MitsubishiJPCommandError("Vehicle reported that the command failed")
         if pending_is_ok:
             return None
-        raise MitsubishiJPCommandUnknown("Command result timed out; the command was not retried")
+        raise MitsubishiJPCommandUnknown(
+            "Command result timed out; the command was not retried. Check the "
+            "official app"
+        )
 
     async def async_start_climate(self, vehicle: Vehicle) -> CommandResult:
         """Wake the vehicle and start climate once at the verified 25 °C setting."""
@@ -621,16 +642,24 @@ class MitsubishiJPClient:
                 {**selector, "refreshType": 0},
                 vehicle=vehicle,
             )
-            await self._async_kintaro_post(
+            wake = await self._async_kintaro_post(
                 "/prod/vehicle/wakeUpVehicle/v1", selector, vehicle=vehicle
             )
-            await self._async_poll_request(
+            wake_wait = _number(wake.get("wakeUpDuration")) or 60
+            if not 15 <= wake_wait <= 90:
+                wake_wait = 60
+            refresh_result = await self._async_poll_request(
                 refresh,
                 vehicle,
                 default_interval=2,
-                max_wait=15,
+                max_wait=wake_wait,
                 pending_is_ok=True,
             )
+            if refresh_result is None:
+                raise MitsubishiJPCommandError(
+                    "Vehicle did not finish waking before the timeout; climate "
+                    "START was not sent"
+                )
             try:
                 response = await self._async_kintaro_post(
                     "/prod/remote/startClimate/v1",

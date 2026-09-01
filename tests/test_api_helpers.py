@@ -91,7 +91,7 @@ class APIHelperTests(unittest.IsolatedAsyncioTestCase):
                     default_interval=5,
                 )
 
-    async def test_control_session_error_is_not_retried(self):
+    async def test_control_session_error_is_rejected_and_not_retried(self):
         self.client._session_key = b"1234567890123456"
         self.client._session_sign_key = "sign"
         self.client._correlation_id = "correlation"
@@ -101,7 +101,7 @@ class APIHelperTests(unittest.IsolatedAsyncioTestCase):
             return_value={"state": "F", "errorCode": 600001}
         )
         self.client._async_initialize_kintaro = AsyncMock()
-        with self.assertRaises(api.MitsubishiJPCommandUnknown):
+        with self.assertRaises(api.MitsubishiJPCommandError):
             await self.client._async_kintaro_post(
                 "/prod/remote/startClimate/v1",
                 {"action": "double_start"},
@@ -110,6 +110,61 @@ class APIHelperTests(unittest.IsolatedAsyncioTestCase):
             )
         self.assertEqual(self.client._async_request.await_count, 1)
         self.client._async_initialize_kintaro.assert_not_awaited()
+
+    async def test_explicit_control_rejection_is_not_reported_as_unknown(self):
+        self.client._session_key = b"1234567890123456"
+        self.client._session_sign_key = "sign"
+        self.client._correlation_id = "correlation"
+        self.client._access_token = "access"
+        self.client._access_expires_at = api.time.monotonic() + 3600
+        self.client._async_request = AsyncMock(
+            return_value={"state": "F", "errorCode": 123456}
+        )
+        with self.assertRaisesRegex(api.MitsubishiJPCommandError, "123456"):
+            await self.client._async_kintaro_post(
+                "/prod/remote/startClimate/v1",
+                {"action": "double_start"},
+                vehicle=self.vehicle,
+                is_control=True,
+            )
+        self.assertEqual(self.client._async_request.await_count, 1)
+
+    async def test_control_network_failure_is_unknown_and_not_retried(self):
+        self.client._session_key = b"1234567890123456"
+        self.client._session_sign_key = "sign"
+        self.client._correlation_id = "correlation"
+        self.client._access_token = "access"
+        self.client._access_expires_at = api.time.monotonic() + 3600
+        self.client._async_request = AsyncMock(
+            side_effect=api.MitsubishiJPConnectionError("network unavailable")
+        )
+        with self.assertRaisesRegex(
+            api.MitsubishiJPCommandUnknown, "Check the official app"
+        ):
+            await self.client._async_kintaro_post(
+                "/prod/remote/startClimate/v1",
+                {"action": "double_start"},
+                vehicle=self.vehicle,
+                is_control=True,
+            )
+        self.assertEqual(self.client._async_request.await_count, 1)
+
+    async def test_start_is_not_sent_if_vehicle_never_finishes_waking(self):
+        self.client._async_ensure_kintaro = AsyncMock()
+        self.client._async_kintaro_post = AsyncMock(
+            side_effect=[
+                {"requestId": "refresh", "duration": 80, "pollingInterval": 2},
+                {"wakeUpDuration": 60},
+            ]
+        )
+        self.client._async_poll_request = AsyncMock(return_value=None)
+        with self.assertRaisesRegex(
+            api.MitsubishiJPCommandError, "START was not sent"
+        ):
+            await self.client.async_start_climate(self.vehicle)
+        self.assertEqual(self.client._async_kintaro_post.await_count, 2)
+        paths = [call.args[0] for call in self.client._async_kintaro_post.await_args_list]
+        self.assertNotIn("/prod/remote/startClimate/v1", paths)
 
     async def test_refresh_token_callback_receives_rotated_token(self):
         callback = AsyncMock()

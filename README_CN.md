@@ -17,6 +17,7 @@
 - 每 15 分钟（可设 5–120 分钟）的常规 polling 只读云端缓存，不唤醒车辆。
 - 只有启动空调时才按官方 App 的顺序发送状态刷新和车辆唤醒。
 - START/STOP 控制请求绝不自动重发。若网络中断导致结果未知，Home Assistant 会报错并要求用官方 App 确认。
+- 点击开启或关闭后，HA 会立即显示请求的模式；命令失败时立即回退，成功后等待云端状态确认。临时状态最多保留两分钟。
 - access token 在到期前 5 分钟刷新；服务每次返回的新 refresh token 都会原子写回 HA 配置。
 - 日志不记录密码、token、VIN 或请求/响应正文。
 
@@ -40,7 +41,7 @@ python3 tools/check_connection.py
 
 ## 为什么启动较慢
 
-车辆需要通过车载通信模块从休眠状态上线。集成先提交 `refreshVSR` 和 `wakeUpVehicle`，最多等待状态刷新 15 秒，然后提交一次空调 START；START 的结果使用自己的 request ID 轮询。因此正常情况也可能需要十几秒到一分钟。
+车辆需要通过车载通信模块从休眠状态上线。集成先提交 `refreshVSR` 和 `wakeUpVehicle`，等待状态刷新明确完成后才提交一次空调 START；慢时可能需要约一分钟。若车辆未在服务器给出的唤醒时限内上线，集成不会发送 START。START 的结果使用自己的 request ID 单独轮询。
 
 ## 与 EU 版的关系
 
