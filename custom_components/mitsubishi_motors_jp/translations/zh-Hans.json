@@ -1,0 +1,56 @@
+{
+  "title": "日本 Mitsubishi Motors",
+  "config": {
+    "step": {
+      "user": {
+        "title": "添加日本 Mitsubishi Motors",
+        "description": "请使用日本新版 Mitsubishi Motors App 的账户。已验证的空调流程不需要 4 位 PIN。",
+        "data": {
+          "username": "邮箱",
+          "password": "密码",
+          "update_interval": "轮询间隔（分钟）"
+        }
+      },
+      "reauth_confirm": {
+        "title": "重新登录",
+        "description": "输入已配置的日本 Mitsubishi Motors 账户密码。",
+        "data": {"password": "密码"}
+      }
+    },
+    "error": {
+      "invalid_auth": "登录失败，请检查邮箱和密码。服务会限制连续登录失败次数。",
+      "cannot_connect": "无法连接日本 Mitsubishi Motors 服务。",
+      "no_vehicles": "账户中没有返回兼容车辆。",
+      "unknown": "发生未知错误，请查看 Home Assistant 日志。"
+    },
+    "abort": {
+      "already_configured": "该账户已经配置。",
+      "reauth_successful": "认证信息已更新。"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "轮询设置",
+        "description": "常规轮询只读取云端缓存，不会唤醒车辆。",
+        "data": {"update_interval": "轮询间隔（分钟）"}
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery_level": {"name": "动力电池"},
+      "charge_remaining_time": {"name": "剩余充电时间"},
+      "climate_target_temperature": {"name": "空调目标温度"}
+    },
+    "binary_sensor": {
+      "is_charging": {"name": "正在充电"},
+      "is_plugged_in": {"name": "充电枪已连接"},
+      "climate_active": {"name": "空调运行中"}
+    },
+    "climate": {
+      "remote_climate": {"name": "远程空调"}
+    }
+  }
+}
+

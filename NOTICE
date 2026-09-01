@@ -1,0 +1,9 @@
+This project is an independent, unofficial Home Assistant integration.
+
+Its Home Assistant integration layout was informed by the MIT-licensed
+TomTuTHub/mitsubishi-outlander-phev-eu project. The Japanese authentication,
+encryption, endpoint handling, data parsing, and safety behavior were written
+for the Japanese Mitsubishi Motors service and are separate implementations.
+
+Mitsubishi and related marks belong to their respective owners.
+

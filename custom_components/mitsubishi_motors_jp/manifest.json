@@ -1,0 +1,14 @@
+{
+  "domain": "mitsubishi_motors_jp",
+  "name": "Mitsubishi Motors Japan",
+  "codeowners": ["@aureole999"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/aureole999/Mitsubishi-Motors-JP-HASS",
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/aureole999/Mitsubishi-Motors-JP-HASS/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}
+

@@ -1,0 +1,56 @@
+{
+  "title": "Mitsubishi Motors Japan",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add Mitsubishi Motors Japan",
+        "description": "Use the account from the current Japanese Mitsubishi Motors app. No PIN is required for the verified climate flow.",
+        "data": {
+          "username": "Email",
+          "password": "Password",
+          "update_interval": "Polling interval (minutes)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Sign in again",
+        "description": "Enter the password for the configured Mitsubishi Motors Japan account.",
+        "data": {"password": "Password"}
+      }
+    },
+    "error": {
+      "invalid_auth": "Authentication failed. Check the email and password. The service limits repeated login attempts.",
+      "cannot_connect": "Could not connect to the Japanese Mitsubishi Motors service.",
+      "no_vehicles": "The account returned no compatible vehicles.",
+      "unknown": "Unexpected error. Check the Home Assistant log."
+    },
+    "abort": {
+      "already_configured": "This account is already configured.",
+      "reauth_successful": "Authentication was updated successfully."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Polling settings",
+        "description": "Regular polling reads cached cloud data and does not wake the vehicle.",
+        "data": {"update_interval": "Polling interval (minutes)"}
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery_level": {"name": "Drive battery"},
+      "charge_remaining_time": {"name": "Charge remaining time"},
+      "climate_target_temperature": {"name": "Climate target temperature"}
+    },
+    "binary_sensor": {
+      "is_charging": {"name": "Charging"},
+      "is_plugged_in": {"name": "Plugged in"},
+      "climate_active": {"name": "Climate active"}
+    },
+    "climate": {
+      "remote_climate": {"name": "Remote climate"}
+    }
+  }
+}
+

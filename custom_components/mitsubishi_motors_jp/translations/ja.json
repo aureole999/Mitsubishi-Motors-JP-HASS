@@ -1,0 +1,56 @@
+{
+  "title": "Mitsubishi Motors Japan",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mitsubishi Motors Japan を追加",
+        "description": "日本向けの新しい Mitsubishi Motors アプリのアカウントを使用します。検証済みの空調操作に4桁PINは不要です。",
+        "data": {
+          "username": "メールアドレス",
+          "password": "パスワード",
+          "update_interval": "ポーリング間隔（分）"
+        }
+      },
+      "reauth_confirm": {
+        "title": "再ログイン",
+        "description": "設定済みアカウントのパスワードを入力してください。",
+        "data": {"password": "パスワード"}
+      }
+    },
+    "error": {
+      "invalid_auth": "認証に失敗しました。メールアドレスとパスワードを確認してください。連続した失敗は制限されます。",
+      "cannot_connect": "日本向け Mitsubishi Motors サービスに接続できません。",
+      "no_vehicles": "対応車両が返されませんでした。",
+      "unknown": "予期しないエラーです。Home Assistant のログを確認してください。"
+    },
+    "abort": {
+      "already_configured": "このアカウントは設定済みです。",
+      "reauth_successful": "認証情報を更新しました。"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "ポーリング設定",
+        "description": "通常のポーリングはクラウドのキャッシュのみを読み取り、車両を起動しません。",
+        "data": {"update_interval": "ポーリング間隔（分）"}
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery_level": {"name": "駆動用バッテリー"},
+      "charge_remaining_time": {"name": "充電残り時間"},
+      "climate_target_temperature": {"name": "空調設定温度"}
+    },
+    "binary_sensor": {
+      "is_charging": {"name": "充電中"},
+      "is_plugged_in": {"name": "充電プラグ接続"},
+      "climate_active": {"name": "空調作動中"}
+    },
+    "climate": {
+      "remote_climate": {"name": "リモート空調"}
+    }
+  }
+}
+
