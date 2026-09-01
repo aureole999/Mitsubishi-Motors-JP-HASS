@@ -149,42 +149,23 @@ class APIHelperTests(unittest.IsolatedAsyncioTestCase):
             )
         self.assertEqual(self.client._async_request.await_count, 1)
 
-    async def test_start_is_sent_once_when_refresh_remains_pending(self):
+    async def test_start_is_sent_directly_once(self):
         self.client._async_ensure_kintaro = AsyncMock()
         self.client._async_kintaro_post = AsyncMock(
-            side_effect=[
-                {"requestId": "refresh", "duration": 80, "pollingInterval": 2},
-                {"wakeUpDuration": 60},
-                {"requestId": "start", "duration": 80, "pollingInterval": 5},
-            ]
+            return_value={
+                "requestId": "start", "duration": 80, "pollingInterval": 5
+            }
         )
         self.client._async_poll_request = AsyncMock(
-            side_effect=[None, models.CommandResult("start", 1)]
+            return_value=models.CommandResult("start", 1)
         )
         result = await self.client.async_start_climate(self.vehicle)
         self.assertEqual(result.request_id, "start")
-        self.assertEqual(self.client._async_kintaro_post.await_count, 3)
+        self.assertEqual(self.client._async_kintaro_post.await_count, 1)
         paths = [call.args[0] for call in self.client._async_kintaro_post.await_args_list]
         self.assertEqual(paths.count("/prod/remote/startClimate/v1"), 1)
-        wake_poll = self.client._async_poll_request.await_args_list[0]
-        self.assertEqual(wake_poll.kwargs["max_wait"], api.START_WAKE_GRACE_PERIOD)
-        self.assertTrue(wake_poll.kwargs["pending_is_ok"])
-
-    async def test_start_is_not_sent_after_explicit_refresh_failure(self):
-        self.client._async_ensure_kintaro = AsyncMock()
-        self.client._async_kintaro_post = AsyncMock(
-            side_effect=[
-                {"requestId": "refresh", "duration": 80, "pollingInterval": 2},
-                {"wakeUpDuration": 60},
-            ]
-        )
-        self.client._async_poll_request = AsyncMock(
-            side_effect=api.MitsubishiJPCommandError("refresh failed")
-        )
-        with self.assertRaisesRegex(api.MitsubishiJPCommandError, "refresh failed"):
-            await self.client.async_start_climate(self.vehicle)
-        paths = [call.args[0] for call in self.client._async_kintaro_post.await_args_list]
-        self.assertNotIn("/prod/remote/startClimate/v1", paths)
+        poll = self.client._async_poll_request.await_args
+        self.assertTrue(poll.kwargs["command_was_sent"])
 
     async def test_refresh_token_callback_receives_rotated_token(self):
         callback = AsyncMock()

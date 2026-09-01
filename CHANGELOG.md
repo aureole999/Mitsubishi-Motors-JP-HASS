@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.4
+
+- Submit one climate START directly without the preceding `refreshVSR` and
+  `wakeUpVehicle` requests, reducing the delay before the command is sent.
+- Continue polling the START request ID for the vehicle's confirmed result and
+  never retry when the outcome is unknown.
+
 ## 0.1.3
 
 - Follow the observed official app wake-up sequence: wait up to 15 seconds for

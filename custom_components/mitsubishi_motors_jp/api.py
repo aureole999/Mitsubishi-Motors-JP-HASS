@@ -37,9 +37,6 @@ from .protocol import (
 
 TokenCallback = Callable[[str], Awaitable[None]]
 
-START_WAKE_GRACE_PERIOD = 15
-
-
 class MitsubishiJPError(Exception):
     """Base exception. Messages must never contain response bodies or secrets."""
 
@@ -635,25 +632,9 @@ class MitsubishiJPClient:
         )
 
     async def async_start_climate(self, vehicle: Vehicle) -> CommandResult:
-        """Wake the vehicle and start climate once at the verified 25 °C setting."""
+        """Start climate once at the verified 25 °C setting."""
         async with self._command_lock:
             await self._async_ensure_kintaro()
-            selector = self._selector(vehicle)
-            refresh = await self._async_kintaro_post(
-                "/prod/status/refreshVSR/v1",
-                {**selector, "refreshType": 0},
-                vehicle=vehicle,
-            )
-            await self._async_kintaro_post(
-                "/prod/vehicle/wakeUpVehicle/v1", selector, vehicle=vehicle
-            )
-            await self._async_poll_request(
-                refresh,
-                vehicle,
-                default_interval=2,
-                max_wait=START_WAKE_GRACE_PERIOD,
-                pending_is_ok=True,
-            )
             try:
                 response = await self._async_kintaro_post(
                     "/prod/remote/startClimate/v1",
