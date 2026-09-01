@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+
+- Add Mitsubishi Motors integration icons and logos for light and dark Home
+  Assistant themes, including high-resolution variants.
+
 ## 0.1.1
 
 - Publish the requested climate mode immediately in Home Assistant while the
@@ -15,4 +20,3 @@
 
 - Initial Japanese Mitsubishi Motors integration with authentication, rotating
   refresh tokens, cached status polling, and verified 25 °C climate start/stop.
-
