@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.3
+
+- Follow the observed official app wake-up sequence: wait up to 15 seconds for
+  `refreshVSR`, then submit exactly one climate START even if that refresh is
+  still pending.
+- Remove the overly strict 60-second refresh-success requirement that could
+  prevent START from being sent at all.
+
 ## 0.1.2
 
 - Add Mitsubishi Motors integration icons and logos for light and dark Home

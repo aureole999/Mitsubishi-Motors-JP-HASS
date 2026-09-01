@@ -41,7 +41,7 @@ python3 tools/check_connection.py
 
 ## 为什么启动较慢
 
-车辆需要通过车载通信模块从休眠状态上线。集成先提交 `refreshVSR` 和 `wakeUpVehicle`，等待状态刷新明确完成后才提交一次空调 START；慢时可能需要约一分钟。若车辆未在服务器给出的唤醒时限内上线，集成不会发送 START。START 的结果使用自己的 request ID 单独轮询。
+车辆需要通过车载通信模块从休眠状态上线。集成先提交 `refreshVSR` 和 `wakeUpVehicle`，最多等待状态刷新 15 秒；若刷新提前完成就立即继续，15 秒后仍在处理中也会按照官方 App 的实测顺序提交一次空调 START。START 的结果使用自己的 request ID 单独轮询；结果未知时绝不重发。
 
 ## 与 EU 版的关系
 

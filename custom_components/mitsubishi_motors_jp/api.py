@@ -37,6 +37,8 @@ from .protocol import (
 
 TokenCallback = Callable[[str], Awaitable[None]]
 
+START_WAKE_GRACE_PERIOD = 15
+
 
 class MitsubishiJPError(Exception):
     """Base exception. Messages must never contain response bodies or secrets."""
@@ -642,24 +644,16 @@ class MitsubishiJPClient:
                 {**selector, "refreshType": 0},
                 vehicle=vehicle,
             )
-            wake = await self._async_kintaro_post(
+            await self._async_kintaro_post(
                 "/prod/vehicle/wakeUpVehicle/v1", selector, vehicle=vehicle
             )
-            wake_wait = _number(wake.get("wakeUpDuration")) or 60
-            if not 15 <= wake_wait <= 90:
-                wake_wait = 60
-            refresh_result = await self._async_poll_request(
+            await self._async_poll_request(
                 refresh,
                 vehicle,
                 default_interval=2,
-                max_wait=wake_wait,
+                max_wait=START_WAKE_GRACE_PERIOD,
                 pending_is_ok=True,
             )
-            if refresh_result is None:
-                raise MitsubishiJPCommandError(
-                    "Vehicle did not finish waking before the timeout; climate "
-                    "START was not sent"
-                )
             try:
                 response = await self._async_kintaro_post(
                     "/prod/remote/startClimate/v1",
